@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>OBSIDIAN SIGIL | Precision Ink</title>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400..900;1,400..900&family=Geist:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --void:#060606;
+    --bone:#ece8e2;
+    --ash:#8f8b86;
+    --iron:#333330;
+    --hairline:rgba(236,232,226,0.14);
+    --hairline-strong:rgba(236,232,226,0.32);
+    --signal:#d7d2c8;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--void);
+    color:var(--bone);
+    font-family:'Geist',sans-serif;
+    overflow-x:hidden;
+    cursor:none;
+  }
+  @media (max-width:900px), (pointer:coarse){
+    body{cursor:auto;}
+    .cursor-dot,.cursor-ring{display:none;}
+  }
+  ::selection{background:var(--bone);color:var(--void);}
+
+  h1,h2,h3{font-family:'Bodoni Moda',serif;margin:0;}
+  .mono{font-family:'JetBrains Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;}
+
+  /* grain */
+  .grain{
+    position:fixed;inset:0;z-index:60;pointer-events:none;
+    opacity:0.05;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* custom cursor */
+  .cursor-dot,.cursor-ring{position:fixed;top:0;left:0;pointer-events:none;z-index:9999;border-radius:50%;}
+  .cursor-dot{width:5px;height:5px;background:var(--bone);transform:translate(-50%,-50%);transition:opacity .2s ease;}
+  .cursor-ring{width:34px;height:34px;border:1px solid rgba(236,232,226,0.4);transform:translate(-50%,-50%);transition:width .25s ease,height .25s ease,border-color .25s ease,background .25s ease;}
+  .cursor-ring.active{width:56px;height:56px;background:rgba(236,232,226,0.06);border-color:var(--bone);}
+
+  /* preloader */
+  #preloader{position:fixed;inset:0;background:var(--void);z-index:200;display:flex;align-items:center;justify-content:center;transition:opacity .9s ease, visibility .9s ease;}
+  #preloader.done{opacity:0;visibility:hidden;}
+  #preloader svg{width:180px;height:180px;}
+  .sigil-path{fill:none;stroke:var(--bone);stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:900;stroke-dashoffset:900;animation:draw 2.6s cubic-bezier(.65,.05,.36,1) forwards;}
+  @keyframes draw{to{stroke-dashoffset:0;}}
+  .preload-label{position:absolute;bottom:-38px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;color:var(--ash);opacity:0;animation:fadeUp 1s ease forwards .4s;}
+  @keyframes fadeUp{from{opacity:0;transform:translate(-50%,8px);}to{opacity:1;transform:translate(-50%,0);}}
+
+  /* nav */
+  nav{position:fixed;top:0;width:100%;z-index:50;display:flex;justify-content:space-between;align-items:center;
+    padding:18px 24px;background:rgba(6,6,6,0.75);backdrop-filter:blur(10px);border-bottom:1px solid var(--hairline);}
+  .brand{font-size:20px;letter-spacing:0.02em;text-transform:uppercase;}
+  .nav-links{display:none;gap:36px;font-size:11px;}
+  @media(min-width:900px){.nav-links{display:flex;} nav{padding:18px 64px;}}
+  .nav-links a{color:var(--ash);text-decoration:none;position:relative;padding-bottom:4px;transition:color .3s;}
+  .nav-links a::after{content:'';position:absolute;left:0;bottom:0;width:0;height:1px;background:var(--bone);transition:width .35s ease;}
+  .nav-links a:hover{color:var(--bone);}
+  .nav-links a:hover::after{width:100%;}
+  .nav-links a.current{color:var(--bone);}
+  .nav-links a.current::after{width:100%;}
+
+  .btn{
+    position:relative;display:inline-flex;align-items:center;gap:10px;
+    background:var(--bone);color:var(--void);border:none;
+    padding:14px 30px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;
+    font-family:'JetBrains Mono',monospace;font-weight:600;cursor:none;
+    transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .4s ease;
+  }
+  .btn:hover{box-shadow:0 0 30px rgba(236,232,226,0.35);}
+  .btn.ghost{background:transparent;color:var(--bone);border:1px solid var(--hairline-strong);}
+  .btn.ghost:hover{background:var(--bone);color:var(--void);}
+  .btn-nav{padding:10px 22px;}
+
+  main{position:relative;padding-top:64px;}
+
+  /* HERO */
+  .hero{
+    min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+    padding:0 24px;position:relative;border-bottom:1px solid var(--hairline);overflow:hidden;
+  }
+  @media(min-width:900px){.hero{padding:0 64px;}}
+  .hero-grid{display:grid;grid-template-columns:1fr;gap:40px;align-items:center;max-width:1400px;margin:0 auto;width:100%;}
+  @media(min-width:1024px){.hero-grid{grid-template-columns:1.1fr 0.9fr;}}
+  .hero-eyebrow{font-size:11px;color:var(--ash);margin-bottom:22px;opacity:0;animation:reveal .9s ease forwards .2s;}
+  .hero h1{font-size:56px;line-height:0.98;letter-spacing:-0.01em;font-weight:600;opacity:0;animation:reveal 1s ease forwards .35s;}
+  @media(min-width:900px){.hero h1{font-size:96px;}}
+  .hero h1 .dim{color:var(--ash);opacity:.55;font-style:italic;}
+  .hero-sub{margin-top:26px;font-size:16px;color:var(--ash);max-width:480px;line-height:1.6;opacity:0;animation:reveal 1s ease forwards .5s;}
+  .hero-actions{margin-top:44px;display:flex;flex-wrap:wrap;align-items:center;gap:22px;opacity:0;animation:reveal 1s ease forwards .65s;}
+  .hero-coord{font-size:11px;color:var(--ash);display:flex;align-items:center;gap:8px;}
+  .hero-coord .pulse{width:6px;height:6px;border-radius:50%;background:var(--bone);animation:pulse 2.4s ease infinite;}
+  @keyframes pulse{0%,100%{opacity:.3;transform:scale(1);}50%{opacity:1;transform:scale(1.4);}}
+  @keyframes reveal{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+
+  .hero-sigil-wrap{position:relative;display:flex;justify-content:center;opacity:0;animation:reveal 1.2s ease forwards .5s;}
+  .hero-sigil-wrap svg{width:100%;max-width:420px;height:auto;}
+  .hero-sigil-wrap .scanline{position:absolute;left:8%;right:8%;height:1px;background:linear-gradient(90deg,transparent,var(--bone),transparent);opacity:.6;animation:scan 4.5s linear infinite;}
+  @keyframes scan{0%{top:6%;}100%{top:92%;}}
+  .sigil-path-hero{fill:none;stroke:var(--bone);stroke-width:0.8;stroke-linecap:round;stroke-dasharray:1400;stroke-dashoffset:1400;animation:draw 3.4s cubic-bezier(.6,0,.3,1) forwards .3s;}
+
+  .coord-tag{position:absolute;bottom:28px;right:64px;display:none;flex-direction:column;align-items:flex-end;gap:4px;color:var(--iron);}
+  @media(min-width:900px){.coord-tag{display:flex;}}
+  .coord-tag span{font-size:10px;}
+  .coord-tag .primary{color:var(--ash);font-size:12px;}
+
+  /* section shell */
+  section{padding:120px 24px;}
+  @media(min-width:900px){section{padding:120px 64px;}}
+  .section-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:56px;flex-wrap:wrap;gap:16px;}
+  .section-head h2{font-size:34px;}
+  @media(min-width:900px){.section-head h2{font-size:44px;}}
+  .section-tag{font-size:10px;color:var(--iron);}
+
+  /* reveal-on-scroll utility */
+  .reveal{opacity:0;transform:translateY(28px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1);}
+  .reveal.in{opacity:1;transform:translateY(0);}
+
+  /* === GALLERY: 4-column infinite scroll === */
+  #gallery{
+    position:relative;
+    padding:0 !important;
+    height:100vh;
+    overflow:hidden;
+  }
+
+  /* Background "Art" watermark */
+  .gallery-art-bg{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:2;
+    pointer-events:none;
+    overflow:hidden;
+  }
+  .gallery-art-bg span{
+    font-family:'Bodoni Moda',serif;
+    font-size:clamp(120px,18vw,340px);
+    font-weight:900;
+    font-style:italic;
+    color:transparent;
+    -webkit-text-stroke:1px rgba(236,232,226,0.09);
+    letter-spacing:-0.03em;
+    user-select:none;
+    white-space:nowrap;
+    mix-blend-mode:overlay;
+  }
+
+  /* 4-column grid */
+  .gallery-cols{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    height:100%;
+    padding:8px;
+  }
+  @media(max-width:700px){
+    .gallery-cols{ grid-template-columns:repeat(2,1fr); }
+    .gallery-col:nth-child(3),.gallery-col:nth-child(4){ display:none; }
+  }
+
+  .gallery-col{
+    overflow:hidden;
+    position:relative;
+    height:100%;
+  }
+
+  .gallery-track{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    will-change:transform;
+  }
+
+  .gallery-item{
+    border-radius:14px;
+    overflow:hidden;
+    flex-shrink:0;
+    background:var(--iron);
+  }
+  .gallery-item img{
+    width:100%;
+    height:100%;
+    display:block;
+    object-fit:cover;
+    filter:brightness(0.88) contrast(1.06) saturate(0.85);
+    transition:transform 0.7s cubic-bezier(.2,.7,.2,1),filter 0.5s ease;
+  }
+  .gallery-item:hover img{
+    transform:scale(1.05);
+    filter:brightness(1) contrast(1.02) saturate(1.1);
+  }
+
+  /* philosophy */
+  .philosophy{background:#0b0b0a;border-top:1px solid var(--hairline);border-bottom:1px solid var(--hairline);}
+  .phil-grid{display:grid;grid-template-columns:1fr;gap:56px;max-width:1200px;margin:0 auto;}
+  @media(min-width:900px){.phil-grid{grid-template-columns:1fr 2fr;}}
+  .phil-grid h2{font-size:38px;line-height:1.05;}
+  .phil-marker{display:flex;gap:10px;align-items:center;margin-top:28px;}
+  .phil-marker .line{width:32px;height:1px;background:var(--bone);}
+  .phil-marker span{font-size:11px;color:var(--bone);}
+  .phil-lede{font-size:19px;line-height:1.65;color:var(--bone);margin-bottom:26px;font-weight:300;}
+  .phil-body{font-size:15px;line-height:1.8;color:var(--ash);max-width:640px;margin-bottom:48px;}
+  .phil-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:32px;}
+  @media(min-width:640px){.phil-stats{grid-template-columns:repeat(4,1fr);}}
+  .phil-stats .label{font-size:9px;color:var(--iron);margin-bottom:6px;}
+  .phil-stats .value{font-size:13px;color:var(--bone);}
+
+  /* offerings */
+  .offer-list{border-top:1px solid var(--hairline);max-width:960px;margin:0 auto;}
+  .offer-row{border-bottom:1px solid var(--hairline);padding:34px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
+    cursor:none;transition:padding .5s cubic-bezier(.2,.7,.2,1);position:relative;overflow:hidden;}
+  .offer-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:0;background:var(--bone);opacity:0.05;transition:width .5s ease;z-index:0;}
+  .offer-row:hover::before{width:100%;}
+  .offer-row:hover{padding-left:20px;padding-right:20px;}
+  .offer-left{display:flex;align-items:center;gap:22px;position:relative;z-index:1;}
+  .offer-index{font-size:12px;color:var(--iron);font-family:'JetBrains Mono',monospace;}
+  .offer-row h3{font-size:24px;transition:color .4s ease;}
+  @media(min-width:900px){.offer-row h3{font-size:32px;}}
+  .offer-row:hover h3{color:var(--bone);}
+  .offer-meta{font-size:10px;color:var(--iron);display:flex;align-items:center;gap:12px;position:relative;z-index:1;}
+  .offer-arrow{opacity:0;transform:translateX(-6px);transition:opacity .4s ease,transform .4s ease;}
+  .offer-row:hover .offer-arrow{opacity:1;transform:translateX(0);}
+
+  /* cta */
+  .cta{position:relative;text-align:center;overflow:hidden;}
+  .cta-dots{position:absolute;inset:0;opacity:.08;background-image:radial-gradient(var(--bone) 0.5px,transparent 0.5px);background-size:30px 30px;pointer-events:none;}
+  .cta h2{font-size:44px;line-height:1.05;max-width:760px;margin:0 auto 28px;}
+  @media(min-width:900px){.cta h2{font-size:64px;}}
+  .cta p{color:var(--ash);max-width:520px;margin:0 auto 44px;font-size:15px;line-height:1.7;}
+  .cta .btn{padding:22px 60px;font-size:13px;flex-direction:column;gap:8px;}
+  .cta .btn small{display:block;font-size:9px;font-weight:400;opacity:.55;letter-spacing:.16em;}
+
+  footer{border-top:1px solid var(--hairline);padding:64px 24px;display:flex;flex-direction:column;gap:28px;align-items:center;text-align:center;}
+  @media(min-width:900px){footer{padding:64px;flex-direction:row;justify-content:space-between;text-align:left;}}
+  .footer-brand{font-size:20px;text-transform:uppercase;}
+  .footer-copy{font-size:11px;color:var(--iron);margin-top:6px;}
+  .footer-links{display:flex;gap:28px;font-size:11px;}
+  .footer-links a{color:var(--ash);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .3s,color .3s;}
+  .footer-links a:hover{color:var(--bone);border-color:var(--bone);}
+  .status{display:flex;align-items:center;gap:8px;font-size:9px;color:var(--iron);}
+  .status .dot{width:6px;height:6px;border-radius:50%;background:#8f8;animation:pulse 2s ease infinite;}
+
+  a:focus-visible, button:focus-visible{outline:1px solid var(--bone);outline-offset:3px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+<div class="cursor-dot" id="cdot"></div>
+<div class="cursor-ring" id="cring"></div>
+
+<div id="preloader">
+  <svg viewBox="0 0 200 200">
+    <path class="sigil-path" d="M100 20 L100 180 M40 60 L160 140 M160 60 L40 140 M100 20 L140 60 L100 100 L60 60 Z M100 100 L140 140 L100 180 L60 140 Z" />
+  </svg>
+  <div class="preload-label mono">Trazando el sigilo</div>
+</div>
+
+<nav>
+  <div class="brand" style="font-family:'Bodoni Moda',serif;">Obsidian Sigil</div>
+  <div class="nav-links mono">
+    <a class="current" href="#gallery">Galería</a>
+    <a href="#philosophy">Filosofía</a>
+    <a href="#offerings">Servicios</a>
+    <a href="#booking">Reserva</a>
+  </div>
+  <button class="btn btn-nav">Consultar</button>
+</nav>
+
+<main>
+  <section class="hero">
+    <div class="hero-grid">
+      <div>
+        <p class="hero-eyebrow mono">Tinta de precisión — Rituales digitales</p>
+        <h1>OBSIDIAN<br/><span class="dim">SIGIL</span></h1>
+        <p class="hero-sub">Un estudio de tatuaje construido alrededor de una sola idea: la línea como interfaz entre el cuerpo y la máquina. Cybersigilismo técnico, ejecutado con precisión quirúrgica.</p>
+        <div class="hero-actions">
+          <button class="btn">Iniciar sesión</button>
+          <div class="hero-coord mono"><span class="pulse"></span> Londres / Berlín / Tokio</div>
+        </div>
+      </div>
+      <div class="hero-sigil-wrap">
+        <div class="scanline"></div>
+        <svg viewBox="0 0 300 300">
+          <path class="sigil-path-hero" d="M150 20 L150 280 M60 90 L240 210 M240 90 L60 210 M150 20 L210 90 L150 150 L90 90 Z M150 150 L210 210 L150 280 L90 210 Z M30 150 L270 150 M105 45 L195 45 M105 255 L195 255" />
+          <circle cx="150" cy="150" r="110" fill="none" stroke="var(--iron)" stroke-width="0.5" stroke-dasharray="2 6"/>
+        </svg>
+      </div>
+    </div>
+    <div class="coord-tag mono">
+      <span>Coordenadas</span>
+      <span class="primary">51.5074° N, 0.1278° W</span>
+    </div>
+  </section>
+
+  <section id="gallery">
+    <!-- Watermark text -->
+    <div class="gallery-art-bg" aria-hidden="true"><span>Art</span></div>
+
+    <div class="gallery-cols">
+
+      <!-- COL 1 — scroll UP  (speed: 42s) -->
+      <div class="gallery-col" data-dir="up" data-speed="42000">
+        <div class="gallery-track">
+          <div class="gallery-item" style="height:310px"><img src="https://i.pinimg.com/webp/736x/a2/84/1e/a2841e271f8e45a668cd2c4d5cecbd85.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:210px"><img src="https://i.pinimg.com/736x/9d/86/48/9d8648bdabeb248babcaaa2f90e7f51b.jpg" alt="Arte"></div>
+          <div class="gallery-item" style="height:280px"><img src="https://i.pinimg.com/webp/1200x/4c/b7/90/4cb790bc417df71539d71667e63e8197.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:195px"><img src="https://i.pinimg.com/736x/1f/2f/a1/1f2fa138014660dcd7afada378b783aa.jpg" alt="Arte"></div>
+          <div class="gallery-item" style="height:265px"><img src="https://i.pinimg.com/webp/1200x/44/14/14/4414144ebea3d07ddb94936c82a28f3b.webp" alt="Arte"></div>
+          <!-- duplicate for seamless loop -->
+          <div class="gallery-item" style="height:310px"><img src="https://i.pinimg.com/webp/736x/a2/84/1e/a2841e271f8e45a668cd2c4d5cecbd85.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:210px"><img src="https://i.pinimg.com/736x/9d/86/48/9d8648bdabeb248babcaaa2f90e7f51b.jpg" alt="Arte"></div>
+          <div class="gallery-item" style="height:280px"><img src="https://i.pinimg.com/webp/1200x/4c/b7/90/4cb790bc417df71539d71667e63e8197.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:195px"><img src="https://i.pinimg.com/736x/1f/2f/a1/1f2fa138014660dcd7afada378b783aa.jpg" alt="Arte"></div>
+          <div class="gallery-item" style="height:265px"><img src="https://i.pinimg.com/webp/1200x/44/14/14/4414144ebea3d07ddb94936c82a28f3b.webp" alt="Arte"></div>
+        </div>
+      </div>
+
+      <!-- COL 2 — scroll DOWN (speed: 36s) -->
+      <div class="gallery-col" data-dir="down" data-speed="36000">
+        <div class="gallery-track">
+          <div class="gallery-item" style="height:240px"><img src="https://i.pinimg.com/webp/1200x/4c/b7/90/4cb790bc417df71539d71667e63e8197.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:320px"><img src="https://i.pinimg.com/736x/1f/2f/a1/1f2fa138014660dcd7afada378b783aa.jpg" alt="Arte"></div>
+          <div class="gallery-item" style="height:200px"><img src="https://i.pinimg.com/webp/736x/a2/84/1e/a2841e271f8e45a668cd2c4d5cecbd85.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:280px"><img src="https://i.pinimg.com/webp/1200x/44/14/14/4414144ebea3d07ddb94936c82a28f3b.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:225px"><img src="https://i.pinimg.com/736x/9d/86/48/9d8648bdabeb248babcaaa2f90e7f51b.jpg" alt="Arte"></div>
+          <!-- duplicate -->
+          <div class="gallery-item" style="height:240px"><img src="https://i.pinimg.com/webp/1200x/4c/b7/90/4cb790bc417df71539d71667e63e8197.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:320px"><img src="https://i.pinimg.com/736x/1f/2f/a1/1f2fa138014660dcd7afada378b783aa.jpg" alt="Arte"></div>
+          <div class="gallery-item" style="height:200px"><img src="https://i.pinimg.com/webp/736x/a2/84/1e/a2841e271f8e45a668cd2c4d5cecbd85.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:280px"><img src="https://i.pinimg.com/webp/1200x/44/14/14/4414144ebea3d07ddb94936c82a28f3b.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:225px"><img src="https://i.pinimg.com/736x/9d/86/48/9d8648bdabeb248babcaaa2f90e7f51b.jpg" alt="Arte"></div>
+        </div>
+      </div>
+
+      <!-- COL 3 — scroll UP  (speed: 48s) -->
+      <div class="gallery-col" data-dir="up" data-speed="48000">
+        <div class="gallery-track">
+          <div class="gallery-item" style="height:270px"><img src="https://i.pinimg.com/736x/1f/2f/a1/1f2fa138014660dcd7afada378b783aa.jpg" alt="Arte"></div>
+          <div class="gallery-item" style="height:315px"><img src="https://i.pinimg.com/webp/1200x/44/14/14/4414144ebea3d07ddb94936c82a28f3b.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:205px"><img src="https://i.pinimg.com/736x/9d/86/48/9d8648bdabeb248babcaaa2f90e7f51b.jpg" alt="Arte"></div>
+          <div class="gallery-item" style="height:290px"><img src="https://i.pinimg.com/webp/736x/a2/84/1e/a2841e271f8e45a668cd2c4d5cecbd85.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:230px"><img src="https://i.pinimg.com/webp/1200x/4c/b7/90/4cb790bc417df71539d71667e63e8197.webp" alt="Arte"></div>
+          <!-- duplicate -->
+          <div class="gallery-item" style="height:270px"><img src="https://i.pinimg.com/736x/1f/2f/a1/1f2fa138014660dcd7afada378b783aa.jpg" alt="Arte"></div>
+          <div class="gallery-item" style="height:315px"><img src="https://i.pinimg.com/webp/1200x/44/14/14/4414144ebea3d07ddb94936c82a28f3b.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:205px"><img src="https://i.pinimg.com/736x/9d/86/48/9d8648bdabeb248babcaaa2f90e7f51b.jpg" alt="Arte"></div>
+          <div class="gallery-item" style="height:290px"><img src="https://i.pinimg.com/webp/736x/a2/84/1e/a2841e271f8e45a668cd2c4d5cecbd85.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:230px"><img src="https://i.pinimg.com/webp/1200x/4c/b7/90/4cb790bc417df71539d71667e63e8197.webp" alt="Arte"></div>
+        </div>
+      </div>
+
+      <!-- COL 4 — scroll DOWN (speed: 39s) -->
+      <div class="gallery-col" data-dir="down" data-speed="39000">
+        <div class="gallery-track">
+          <div class="gallery-item" style="height:295px"><img src="https://i.pinimg.com/webp/1200x/44/14/14/4414144ebea3d07ddb94936c82a28f3b.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:215px"><img src="https://i.pinimg.com/webp/736x/a2/84/1e/a2841e271f8e45a668cd2c4d5cecbd85.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:300px"><img src="https://i.pinimg.com/736x/9d/86/48/9d8648bdabeb248babcaaa2f90e7f51b.jpg" alt="Arte"></div>
+          <div class="gallery-item" style="height:235px"><img src="https://i.pinimg.com/webp/1200x/4c/b7/90/4cb790bc417df71539d71667e63e8197.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:270px"><img src="https://i.pinimg.com/736x/1f/2f/a1/1f2fa138014660dcd7afada378b783aa.jpg" alt="Arte"></div>
+          <!-- duplicate -->
+          <div class="gallery-item" style="height:295px"><img src="https://i.pinimg.com/webp/1200x/44/14/14/4414144ebea3d07ddb94936c82a28f3b.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:215px"><img src="https://i.pinimg.com/webp/736x/a2/84/1e/a2841e271f8e45a668cd2c4d5cecbd85.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:300px"><img src="https://i.pinimg.com/736x/9d/86/48/9d8648bdabeb248babcaaa2f90e7f51b.jpg" alt="Arte"></div>
+          <div class="gallery-item" style="height:235px"><img src="https://i.pinimg.com/webp/1200x/4c/b7/90/4cb790bc417df71539d71667e63e8197.webp" alt="Arte"></div>
+          <div class="gallery-item" style="height:270px"><img src="https://i.pinimg.com/736x/1f/2f/a1/1f2fa138014660dcd7afada378b783aa.jpg" alt="Arte"></div>
+        <div class="gallery-item" style="height:220px"><img src="https://i.pinimg.com/736x/1c/18/26/1c1826b985fde1a5f9c68e83c4e8ac5a.jpg" alt="Arte"></div>
+<div class="gallery-item" style="height:245px"><img src="https://i.pinimg.com/736x/c8/5c/50/c85c5097b5a51a0da9096974db66e5ae.jpg" alt="Arte"></div>
+<div class="gallery-item" style="height:270px"><img src="https://i.pinimg.com/736x/11/13/64/1113648d02eaa2a217d19151be889a7a.jpg" alt="Arte"></div>
+<div class="gallery-item" style="height:295px"><img src="https://i.pinimg.com/736x/a2/ba/e4/a2bae4fb3bd4a1d03699ee1d48a63da7.jpg" alt="Arte"></div>
+<div class="gallery-item" style="height:220px"><img src="https://i.pinimg.com/webp/1200x/c4/d6/76/c4d67653b4d9b1dff7b1151ae84171f1.webp" alt="Arte"></div>
+<div class="gallery-item" style="height:245px"><img src="https://i.pinimg.com/736x/5a/68/d2/5a68d2006a438168e1f1b7695ada228c.jpg" alt="Arte"></div>
+<div class="gallery-item" style="height:270px"><img src="https://i.pinimg.com/736x/f9/0e/da/f90eda1a7c8f508f10680e21fc104c46.jpg" alt="Arte"></div>
+<div class="gallery-item" style="height:295px"><img src="https://i.pinimg.com/webp/736x/59/4a/e4/594ae4afdf43189d19499290f2631a32.webp" alt="Arte"></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="philosophy" id="philosophy">
+    <div class="phil-grid">
+      <div class="reveal">
+        <h2>LA ÉTICA<br/>DEL TRAZO</h2>
+        <div class="phil-marker">
+          <div class="line"></div>
+          <span class="mono">Hibridez digital-orgánica</span>
+        </div>
+      </div>
+      <div class="reveal">
+        <p class="phil-lede">En Obsidian Sigil entendemos la piel como la última frontera de la expresión digital. El cybersigilismo no es un estilo: es la integración ritual de la estética de la máquina en el cuerpo.</p>
+        <p class="phil-body">Nuestra filosofía se sostiene en la "precisión del vacío": el uso intencional del espacio negro para definir la forma. No decoramos, grabamos sigilos — marcas que cargan peso, intención y perfección técnica. Cada línea se calcula para resonar con la anatomía de quien la porta, creando una interfaz permanente entre el alma y el circuito.</p>
+        <div class="phil-stats">
+          <div><div class="label mono">Pureza</div><div class="value mono">0.01mm</div></div>
+          <div><div class="label mono">Material</div><div class="value mono">Carbono obsidiana</div></div>
+          <div><div class="label mono">Ritual</div><div class="value mono">Intención digital</div></div>
+          <div><div class="label mono">Legado</div><div class="value mono">Sigilo eterno</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="offerings">
+    <div class="section-head" style="max-width:960px;margin-left:auto;margin-right:auto;">
+      <h2 class="reveal">Servicios</h2>
+    </div>
+    <div class="offer-list">
+      <div class="offer-row reveal">
+        <div class="offer-left">
+          <span class="offer-index">01</span>
+          <h3>Cybersigilismo a medida</h3>
+        </div>
+        <div class="offer-meta mono">Diseño técnico / Flujo anatómico <span class="material-symbols-outlined offer-arrow">arrow_forward</span></div>
+      </div>
+      <div class="offer-row reveal">
+        <div class="offer-left">
+          <span class="offer-index">02</span>
+          <h3>Blackwork a gran escala</h3>
+        </div>
+        <div class="offer-meta mono">Saturación obsidiana / Vacío geométrico <span class="material-symbols-outlined offer-arrow">arrow_forward</span></div>
+      </div>
+      <div class="offer-row reveal">
+        <div class="offer-left">
+          <span class="offer-index">03</span>
+          <h3>Linework de precisión</h3>
+        </div>
+        <div class="offer-meta mono">Aguja simple / Definición macro <span class="material-symbols-outlined offer-arrow">arrow_forward</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta" id="booking">
+    <div class="cta-dots"></div>
+    <div style="position:relative;z-index:1;">
+      <h2 class="reveal">LA CONVERGENCIA<br/>EMPIEZA AQUÍ.</h2>
+      <p class="reveal">Aceptamos consultas limitadas para el próximo trimestre. Toda sesión técnica requiere una consulta digital previa.</p>
+      <button class="btn reveal">
+        Iniciar sesión
+        <small>Transmisión de datos segura</small>
+      </button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div>
+    <div class="footer-brand" style="font-family:'Bodoni Moda',serif;">Obsidian Sigil</div>
+    <div class="footer-copy mono">© MMXXVI Obsidian Sigil. Tinta de precisión.</div>
+  </div>
+  <div class="footer-links mono">
+    <a href="#">Instagram</a>
+    <a href="#">Privacidad</a>
+    <a href="#">Términos</a>
+    <a href="#">Política del estudio</a>
+  </div>
+  <div class="status mono"><span class="dot"></span> Estudio en línea</div>
+</footer>
+
+<script>
+  // ── Gallery: scroll-driven columns ───────────────────────────────────────
+  function initGallery() {
+    const cols = [...document.querySelectorAll('.gallery-col')];
+
+    // Init state per column
+    cols.forEach(col => {
+      const track = col.querySelector('.gallery-track');
+      if (!track) return;
+      const isDown = col.dataset.dir === 'down';
+      const halfH  = track.scrollHeight / 2;
+      col._track  = track;
+      col._isDown = isDown;
+      col._halfH  = halfH;
+      col._y      = isDown ? -halfH : 0;
+      track.style.transform = 'translateY(' + col._y + 'px)';
+    });
+
+    let velocity    = 0;
+    let lastScrollY = window.scrollY;
+
+    window.addEventListener('scroll', function() {
+      const sy   = window.scrollY;
+      const raw  = sy - lastScrollY;
+      lastScrollY = sy;
+      velocity   += raw * 0.6;
+    }, { passive: true });
+
+    function loop() {
+      if (Math.abs(velocity) > 0.05) {
+        cols.forEach(function(col) {
+          if (!col._track) return;
+          var dir = col._isDown ? 1 : -1;
+          col._y += velocity * dir * 0.55;
+
+          if (col._y <= -col._halfH) col._y += col._halfH;
+          if (col._y >= 0)           col._y -= col._halfH;
+
+          col._track.style.transform = 'translateY(' + col._y + 'px)';
+        });
+        velocity *= 0.88;
+      }
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // ── Preloader + init ──────────────────────────────────────────────────────
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      document.getElementById('preloader').classList.add('done');
+      initGallery();
+    }, 2200);
+  });
+
+  // ── Custom cursor ─────────────────────────────────────────────────────────
+  const cdot = document.getElementById('cdot');
+  const cring = document.getElementById('cring');
+  let mx=0,my=0, rx=0, ry=0;
+  window.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cdot.style.left = mx+'px'; cdot.style.top = my+'px';
+  });
+  function animRing(){
+    rx += (mx-rx)*0.18; ry += (my-ry)*0.18;
+    cring.style.left = rx+'px'; cring.style.top = ry+'px';
+    requestAnimationFrame(animRing);
+  }
+  animRing();
+  document.querySelectorAll('button, a, .offer-row, .gallery-item').forEach(el=>{
+    el.addEventListener('mouseenter', ()=> cring.classList.add('active'));
+    el.addEventListener('mouseleave', ()=> cring.classList.remove('active'));
+  });
+
+  // ── Scroll reveal ─────────────────────────────────────────────────────────
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){
+        en.target.classList.add('in');
+        io.unobserve(en.target);
+      }
+    });
+  }, {threshold:0.15});
+  document.querySelectorAll('.reveal').forEach(el=> io.observe(el));
+</script>
+
+</body>
+</html>
